@@ -196,8 +196,7 @@ namespace UnityEditor.Rendering.Universal
         void DrawSpotAngle()
         {
             EditorGUILayout.Slider(settings.spotAngle, 1f, 179f, s_Styles.SpotAngle);
-            // Disable until baking of inner angle works
-            //settings.DrawInnerAndOuterSpotAngle();
+            settings.DrawInnerAndOuterSpotAngle();
         }
 
         void DrawAdditionalShadowData()

@@ -4,7 +4,6 @@ using Unity.Collections;
 using UnityEditor;
 using UnityEditor.Rendering.Universal;
 #endif
-using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.Scripting.APIUpdating;
 using Lightmapping = UnityEngine.Experimental.GlobalIllumination.Lightmapping;
 
@@ -130,10 +129,8 @@ namespace UnityEngine.Rendering.Universal
             // For compatibility reasons we also match old LightweightPipeline tag.
             Shader.globalRenderPipeline = "UniversalPipeline,LightweightPipeline";
 
-            // Editor only.
-#if UNITY_EDITOR
             Lightmapping.SetDelegate(lightsDelegate);
-#endif
+
             CameraCaptureBridge.enabled = true;
 
             RenderingUtils.ClearSystemInfoCache();
@@ -148,9 +145,8 @@ namespace UnityEngine.Rendering.Universal
 
 #if UNITY_EDITOR
             SceneViewDrawMode.ResetDrawMode();
-#endif
-
             Lightmapping.ResetDelegate();
+#endif
             CameraCaptureBridge.enabled = false;
         }
 
@@ -247,7 +243,7 @@ namespace UnityEngine.Rendering.Universal
             SceneViewDrawMode.SetupDrawMode();
 #endif
         }
-		
+
 		static bool PlatformNeedsToKillAlpha()
 		{
 			return Application.platform == RuntimePlatform.IPhonePlayer ||
@@ -581,48 +577,8 @@ namespace UnityEngine.Rendering.Universal
             Shader.SetGlobalMatrix(PerCameraBuffer._InvCameraViewProj, invViewProjMatrix);
         }
 
-        // Editor only.
-#if UNITY_EDITOR
-        static Lightmapping.RequestLightsDelegate lightsDelegate = (Light[] requests, NativeArray<LightDataGI> lightsOutput) =>
-        {
-            LightDataGI lightData = new LightDataGI();
 
-            for (int i = 0; i < requests.Length; i++)
-            {
-                Light light = requests[i];
-                switch (light.type)
-                {
-                    case LightType.Directional:
-                        DirectionalLight directionalLight = new DirectionalLight();
-                        LightmapperUtils.Extract(light, ref directionalLight); lightData.Init(ref directionalLight);
-                        break;
-                    case LightType.Point:
-                        PointLight pointLight = new PointLight();
-                        LightmapperUtils.Extract(light, ref pointLight); lightData.Init(ref pointLight);
-                        break;
-                    case LightType.Spot:
-                        SpotLight spotLight = new SpotLight();
-                        LightmapperUtils.Extract(light, ref spotLight); lightData.Init(ref spotLight);
-                        break;
-                    case LightType.Area:
-                        RectangleLight rectangleLight = new RectangleLight();
-                        LightmapperUtils.Extract(light, ref rectangleLight); lightData.Init(ref rectangleLight);
-                        light.lightmapBakeType = LightmapBakeType.Baked;
-                        break;
-                    case LightType.Disc:
-                        DiscLight discLight = new DiscLight();
-                        LightmapperUtils.Extract(light, ref discLight); lightData.Init(ref discLight);
-                        light.lightmapBakeType = LightmapBakeType.Baked;
-                        break;
-                    default:
-                        lightData.InitNoBake(light.GetInstanceID());
-                        break;
-                }
 
-                lightData.falloff = FalloffType.InverseSquared;
-                lightsOutput[i] = lightData;
-            }
-        };
-#endif
+
     }
 }
