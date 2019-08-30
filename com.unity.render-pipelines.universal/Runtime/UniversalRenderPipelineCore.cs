@@ -216,6 +216,7 @@ namespace UnityEngine.Rendering.Universal
                         SpotLight spotLight = new SpotLight();
                         LightmapperUtils.Extract(light, ref spotLight);
                         spotLight.innerConeAngle = light.innerSpotAngle * Mathf.Deg2Rad;
+                        spotLight.angularFalloff = AngularFalloffType.AnalyticAndInnerAngle;
                         lightData.Init(ref spotLight);
                         break;
                     case LightType.Area:
