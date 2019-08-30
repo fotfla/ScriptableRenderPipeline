@@ -221,14 +221,14 @@ namespace UnityEngine.Rendering.Universal
                     case LightType.Area:
                         RectangleLight rectangleLight = new RectangleLight();
                         LightmapperUtils.Extract(light, ref rectangleLight);
+                        rectangleLight.mode = LightMode.Baked;
                         lightData.Init(ref rectangleLight);
-                        light.lightmapBakeType = LightmapBakeType.Baked;
                         break;
                     case LightType.Disc:
                         DiscLight discLight = new DiscLight();
                         LightmapperUtils.Extract(light, ref discLight);
+                        discLight.mode = LightMode.Baked;
                         lightData.Init(ref discLight);
-                        light.lightmapBakeType = LightmapBakeType.Baked;
                         break;
                     default:
                         lightData.InitNoBake(light.GetInstanceID());

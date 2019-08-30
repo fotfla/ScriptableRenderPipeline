@@ -145,8 +145,8 @@ namespace UnityEngine.Rendering.Universal
 
 #if UNITY_EDITOR
             SceneViewDrawMode.ResetDrawMode();
-            Lightmapping.ResetDelegate();
 #endif
+            Lightmapping.ResetDelegate();
             CameraCaptureBridge.enabled = false;
         }
 
