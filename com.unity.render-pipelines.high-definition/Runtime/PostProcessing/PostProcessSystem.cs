@@ -80,6 +80,10 @@ namespace UnityEngine.Rendering.HighDefinition
         ColorCurves m_Curves;
         FilmGrain m_FilmGrain;
 
+        //Custom Effect
+        Material m_DistortionMaterial;
+        Distortion m_Distortion;
+
         // Prefetched frame settings (updated on every frame)
         bool m_ExposureControlFS;
         bool m_StopNaNFS;
@@ -206,6 +210,9 @@ namespace UnityEngine.Rendering.HighDefinition
                 enableRandomWrite: true, name: "Average Luminance Temp 32"
             );
 
+            //Custom Effect
+            m_DistortionMaterial =CoreUtils.CreateEngineMaterial(m_Resources.shaders.DistortionPS);
+
             ResetHistory();
         }
 
@@ -240,6 +247,10 @@ namespace UnityEngine.Rendering.HighDefinition
             m_BokehIndirectCmd          = null;
             m_NearBokehTileList         = null;
             m_FarBokehTileList          = null;
+
+            //Custom Effect
+            CoreUtils.Destroy(m_DistortionMaterial);
+            m_DistortionMaterial = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -275,6 +286,8 @@ namespace UnityEngine.Rendering.HighDefinition
             m_ShadowsMidtonesHighlights = stack.GetComponent<ShadowsMidtonesHighlights>();
             m_Curves                    = stack.GetComponent<ColorCurves>();
             m_FilmGrain                 = stack.GetComponent<FilmGrain>();
+
+            m_Distortion = stack.GetComponent<Distortion>();
 
             // Prefetch frame settings - these aren't free to pull so we want to do it only once
             // per frame
@@ -518,6 +531,14 @@ namespace UnityEngine.Rendering.HighDefinition
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
                         DoFXAA(cmd, camera, source, destination);
                         PoolSource(ref source, destination);
+                    }
+                }
+
+                if(m_PostProcessEnabled){
+                    if(m_Distortion.IsActive()){
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoDistortionPass(cmd,camera,source, destination);
+                        PoolSource(ref source,destination);
                     }
                 }
 
@@ -2304,6 +2325,13 @@ namespace UnityEngine.Rendering.HighDefinition
             }
 
             HDUtils.DrawFullScreen(cmd, backBufferRect, m_FinalPassMaterial, destination);
+        }
+
+        void DoDistortionPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination){
+            m_DistortionMaterial.SetTexture(HDShaderIDs._InputTexture,source);
+            m_DistortionMaterial.SetFloat(Shader.PropertyToID("_Amount"),m_Distortion.amount.value);
+
+            HDUtils.DrawFullScreen(cmd,m_DistortionMaterial,destination);
         }
 
         #endregion
