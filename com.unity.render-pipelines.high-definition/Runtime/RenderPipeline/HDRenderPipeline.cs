@@ -1760,9 +1760,9 @@ namespace UnityEngine.Rendering.HighDefinition
             // Now that all depths have been rendered, resolve the depth buffer
             m_SharedRTManager.ResolveSharedRT(cmd, hdCamera);
 
-            RenderDecals(hdCamera, cmd, renderContext, cullingResults);
-
             RenderGBuffer(cullingResults, hdCamera, renderContext, cmd);
+
+            RenderDecals(hdCamera, cmd, renderContext, cullingResults);
 
             // We can now bind the normal buffer to be use by any effect
             m_SharedRTManager.BindNormalBuffer(cmd);
