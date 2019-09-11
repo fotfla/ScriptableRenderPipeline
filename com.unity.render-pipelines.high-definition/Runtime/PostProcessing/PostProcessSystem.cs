@@ -287,7 +287,11 @@ namespace UnityEngine.Rendering.HighDefinition
             m_Curves                    = stack.GetComponent<ColorCurves>();
             m_FilmGrain                 = stack.GetComponent<FilmGrain>();
 
+#region CustomEffect
+
             m_Distortion = stack.GetComponent<Distortion>();
+
+#endregion
 
             // Prefetch frame settings - these aren't free to pull so we want to do it only once
             // per frame
@@ -533,6 +537,7 @@ namespace UnityEngine.Rendering.HighDefinition
                         PoolSource(ref source, destination);
                     }
                 }
+#region  CustomEffect
 
                 if(m_PostProcessEnabled){
                     if(m_Distortion.IsActive()){
@@ -542,6 +547,7 @@ namespace UnityEngine.Rendering.HighDefinition
                     }
                 }
 
+#endregion
                 // Final pass
                 using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                 {
