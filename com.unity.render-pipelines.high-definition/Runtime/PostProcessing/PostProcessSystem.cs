@@ -84,6 +84,9 @@ namespace UnityEngine.Rendering.HighDefinition
         Material m_DistortionMaterial;
         Distortion m_Distortion;
 
+        Material m_Glitch01Material;
+        Glitch01 m_Glitch01;
+
         // Prefetched frame settings (updated on every frame)
         bool m_ExposureControlFS;
         bool m_StopNaNFS;
@@ -212,6 +215,7 @@ namespace UnityEngine.Rendering.HighDefinition
 
             //Custom Effect
             m_DistortionMaterial =CoreUtils.CreateEngineMaterial(m_Resources.shaders.DistortionPS);
+            m_Glitch01Material = CoreUtils.CreateEngineMaterial(m_Resources.shaders.Glitch01PS);
 
             ResetHistory();
         }
@@ -251,6 +255,8 @@ namespace UnityEngine.Rendering.HighDefinition
             //Custom Effect
             CoreUtils.Destroy(m_DistortionMaterial);
             m_DistortionMaterial = null;
+            CoreUtils.Destroy(m_Glitch01Material);
+            m_Glitch01Material = null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -287,11 +293,9 @@ namespace UnityEngine.Rendering.HighDefinition
             m_Curves                    = stack.GetComponent<ColorCurves>();
             m_FilmGrain                 = stack.GetComponent<FilmGrain>();
 
-#region CustomEffect
-
+            // CustomEffect
             m_Distortion = stack.GetComponent<Distortion>();
-
-#endregion
+            m_Glitch01 = stack.GetComponent<Glitch01>();
 
             // Prefetch frame settings - these aren't free to pull so we want to do it only once
             // per frame
@@ -537,7 +541,6 @@ namespace UnityEngine.Rendering.HighDefinition
                         PoolSource(ref source, destination);
                     }
                 }
-#region  CustomEffect
 
                 if(m_PostProcessEnabled){
                     if(m_Distortion.IsActive()){
@@ -545,9 +548,15 @@ namespace UnityEngine.Rendering.HighDefinition
                         DoDistortionPass(cmd,camera,source, destination);
                         PoolSource(ref source,destination);
                     }
+
+                    if (m_Glitch01.IsActive())
+                    {
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoGlitch01Pass(cmd, camera, source, destination);
+                        PoolSource(ref source,destination);
+                    }
                 }
 
-#endregion
                 // Final pass
                 using (new ProfilingSample(cmd, "Final Pass", CustomSamplerId.FinalPost.GetSampler()))
                 {
@@ -809,7 +818,7 @@ namespace UnityEngine.Rendering.HighDefinition
             CoreUtils.SetRenderTarget(cmd, destination, depthBuffer);
             cmd.DrawProcedural(Matrix4x4.identity, m_TemporalAAMaterial, 0, MeshTopology.Triangles, 3, 1, m_TAAPropertyBlock);
 
-            // Copy history. 
+            // Copy history.
             var cs = m_Resources.shaders.CopyTAAHistoryCS;
             var kernel = cs.FindKernel("CopyTAAHistory");
 
@@ -2338,6 +2347,17 @@ namespace UnityEngine.Rendering.HighDefinition
             m_DistortionMaterial.SetFloat(Shader.PropertyToID("_Amount"),m_Distortion.amount.value);
 
             HDUtils.DrawFullScreen(cmd,m_DistortionMaterial,destination);
+        }
+
+        void DoGlitch01Pass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination)
+        {
+            m_Glitch01Material.SetTexture(HDShaderIDs._InputTexture,source);
+            m_Glitch01Material.SetFloat(Shader.PropertyToID("_Amount"),m_Glitch01.amount.value);
+            m_Glitch01Material.SetVector(Shader.PropertyToID("_Resolution"),m_Glitch01.resolution.value);
+            m_Glitch01Material.SetFloat(Shader.PropertyToID("_Threshold"),m_Glitch01.threshold.value);
+            m_Glitch01Material.SetInt(Shader.PropertyToID("_Seed"),m_Glitch01.seed.value);
+
+            HDUtils.DrawFullScreen(cmd, m_Glitch01Material, destination);
         }
 
         #endregion

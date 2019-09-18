@@ -234,8 +234,12 @@ namespace UnityEngine.Rendering.HighDefinition
             [Reload("Runtime/PostProcessing/Shaders/CopyTAAHistory.compute")]
             public ComputeShader CopyTAAHistoryCS;
 
+            // CustomEffect
             [Reload("Runtime/PostProcessing/Shaders/Distortion.shader")]
             public Shader DistortionPS;
+
+            [Reload("Runtime/PostProcessing/Shaders/Glitch01.shader")]
+            public Shader Glitch01PS;
 
             // Iterator to retrieve all compute shaders in reflection so we don't have to keep a list of
             // used compute shaders up to date (prefer editor-only usage)
