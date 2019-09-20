@@ -1,4 +1,4 @@
-﻿Shader "Hidden/Distortion"
+﻿Shader "Hidden/Glitch02"
 {
     SubShader
     {
@@ -17,13 +17,16 @@
                 #pragma fragment Frag
 
                 #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Common.hlsl"
+                #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Color.hlsl"
                 #include "Packages/com.unity.render-pipelines.high-definition/Runtime/ShaderLibrary/ShaderVariables.hlsl"
                 #include "Assets/NoiseShader/HLSL/SimplexNoise2D.hlsl"
 
                 TEXTURE2D_X(_InputTexture);
 
                 float _Amount;
+                uint _Div;
                 float _Intensity;
+                uint _Seed;
 
                 struct Attributes
                 {
@@ -50,16 +53,29 @@
                     return frac(45389.4893 * sin(dot(uv,float2(12.159,16.267))));
                 }
 
+                float2x2 rot(float a){
+                    float c= cos(a),s = sin(a);
+                    return float2x2(c,s,-s,c);
+                }
+
                 float4 Frag(Varyings input) : SV_Target0
                 {
                     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                    float h = hash(input.texcoord.y * 5);
-                    float iuv = input.texcoord.y * 30.0 * h;
-                    float2 uv = input.texcoord + snoise(iuv) * _Intensity * 0.1;
-                    uv = frac(uv);
+                    float2 uv = input.texcoord;
+                    float4 color = LOAD_TEXTURE2D_X(_InputTexture, uv * _ScreenSize.xy);
+                    uint2 seed = uint2(fmod(_Seed * 65536 , 289),floor(_Seed * 65536 / 289));
+                    float r = hash(_Seed + uint2(315,631));
+                    uv = mul(rot(r * PI * 2.0),uv);
+                    uint block = _Div == 0 ? 1 :_Div;
+                    uv.x *= (float)block;
+                    float2 iuv = floor(uv);
+                    uv.x /= (float)block;
+                    uv.y += (hash(iuv.x) * 2.0 - 1.0) * _Intensity;
+                    uv = mul(rot(-r * PI * 2.0),uv);
+                    // uv = frac(uv);
+                    uv = clamp(uv,0,0.99);
                     float4 outColor = LOAD_TEXTURE2D_X(_InputTexture, uv * _ScreenSize.xy);
-                    float4 color = LOAD_TEXTURE2D_X(_InputTexture, input.texcoord * _ScreenSize.xy);
                     outColor = lerp(color,outColor,_Amount);
                     outColor.a = 1.0;
                     return outColor;

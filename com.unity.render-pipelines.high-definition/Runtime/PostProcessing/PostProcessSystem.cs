@@ -87,6 +87,9 @@ namespace UnityEngine.Rendering.HighDefinition
         Material m_Glitch01Material;
         Glitch01 m_Glitch01;
 
+        Material m_Glitch02Material;
+        Glitch02 m_Glitch02;
+
         // Prefetched frame settings (updated on every frame)
         bool m_ExposureControlFS;
         bool m_StopNaNFS;
@@ -214,8 +217,9 @@ namespace UnityEngine.Rendering.HighDefinition
             );
 
             //Custom Effect
-            m_DistortionMaterial =CoreUtils.CreateEngineMaterial(m_Resources.shaders.DistortionPS);
+            m_DistortionMaterial = CoreUtils.CreateEngineMaterial(m_Resources.shaders.DistortionPS);
             m_Glitch01Material = CoreUtils.CreateEngineMaterial(m_Resources.shaders.Glitch01PS);
+            m_Glitch02Material = CoreUtils.CreateEngineMaterial(m_Resources.shaders.Glitch02PS);
 
             ResetHistory();
         }
@@ -296,6 +300,7 @@ namespace UnityEngine.Rendering.HighDefinition
             // CustomEffect
             m_Distortion = stack.GetComponent<Distortion>();
             m_Glitch01 = stack.GetComponent<Glitch01>();
+            m_Glitch02 = stack.GetComponent<Glitch02>();
 
             // Prefetch frame settings - these aren't free to pull so we want to do it only once
             // per frame
@@ -553,6 +558,12 @@ namespace UnityEngine.Rendering.HighDefinition
                     {
                         var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
                         DoGlitch01Pass(cmd, camera, source, destination);
+                        PoolSource(ref source,destination);
+                    }
+
+                    if(m_Glitch02.IsActive()){
+                        var destination = m_Pool.Get(Vector2.one, k_ColorFormat);
+                        DoGlitch02Pass(cmd,camera,source,destination);
                         PoolSource(ref source,destination);
                     }
                 }
@@ -2345,6 +2356,7 @@ namespace UnityEngine.Rendering.HighDefinition
         void DoDistortionPass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination){
             m_DistortionMaterial.SetTexture(HDShaderIDs._InputTexture,source);
             m_DistortionMaterial.SetFloat(Shader.PropertyToID("_Amount"),m_Distortion.amount.value);
+            m_DistortionMaterial.SetFloat(Shader.PropertyToID("_Intensity"),m_Distortion.intensity.value);
 
             HDUtils.DrawFullScreen(cmd,m_DistortionMaterial,destination);
         }
@@ -2358,6 +2370,16 @@ namespace UnityEngine.Rendering.HighDefinition
             m_Glitch01Material.SetInt(Shader.PropertyToID("_Seed"),m_Glitch01.seed.value);
 
             HDUtils.DrawFullScreen(cmd, m_Glitch01Material, destination);
+        }
+
+        void DoGlitch02Pass(CommandBuffer cmd, HDCamera camera, RTHandle source, RTHandle destination){
+            m_Glitch02Material.SetTexture(HDShaderIDs._InputTexture,source);
+            m_Glitch02Material.SetFloat(Shader.PropertyToID("_Amount"),m_Glitch02.amount.value);
+            m_Glitch02Material.SetInt(Shader.PropertyToID("_Div"),m_Glitch02.div.value);
+            m_Glitch02Material.SetFloat(Shader.PropertyToID("_Intensity"),m_Glitch02.intensity.value);
+            m_Glitch02Material.SetInt(Shader.PropertyToID("_Seed"),m_Glitch02.seed.value);
+
+            HDUtils.DrawFullScreen(cmd, m_Glitch02Material,destination);
         }
 
         #endregion
